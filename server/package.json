@@ -1,0 +1,35 @@
+{
+    "name": "kontaktformular",
+    "version": "1.0.0",
+    "description": "",
+    "main": "./server.js",
+    "type": "module",
+    "license": "AGPL-version-3.0",
+    "private": false,
+    "engines": {
+        "node": ">= 14.0.0",
+        "npm": ">= 6.0.0"
+    },
+    "homepage": "",
+    "repository": {
+        "type": "git",
+        "url": ""
+    },
+    "bugs": "",
+    "keywords": [],
+    "author": {
+        "name": "",
+        "email": "",
+        "url": ""
+    },
+    "contributors": [],
+    "scripts": {
+        "dev": "",
+        "test": ""
+    },
+    "dependencies": {
+        "body-parser": "^1.20.2",
+        "express": "^4.18.2",
+        "multer": "^1.4.5-lts.1"
+    }
+}

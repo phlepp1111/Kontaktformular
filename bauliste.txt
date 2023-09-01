@@ -1,0 +1,14 @@
+was benötigen wir was ist erledigt:
+
+VPC x
+internet gateway x
+Public Subnet x
+Privat Subnet x 
+Application Load Balancer x 
+Autoscaling x
+Ec2 x
+role (x)
+Endpoints (x)
+DynamoDB x
+S3 (x)
+simple email service / SNS

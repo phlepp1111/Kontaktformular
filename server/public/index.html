@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Kontaktformular</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #fff;
+                box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            }
+            h1 {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            label,
+            input,
+            textarea {
+                display: block;
+                margin-bottom: 10px;
+            }
+            input[type="text"],
+            input[type="email"],
+            textarea {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+            input[type="file"] {
+                margin-top: 5px;
+            }
+            input[type="submit"] {
+                background-color: #007bff;
+                color: #fff;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+            input[type="submit"]:hover {
+                background-color: #0056b3;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Kontaktformular für Schrauben24.de</h1>
+            <form
+                method="post"
+                enctype="multipart/form-data"
+                action="/submit-form"
+            >
+                <label for="vorname">Vorname:</label>
+                <input type="text" id="vorname" name="vorname" required />
+
+                <label for="nachname">Nachname:</label>
+                <input type="text" id="nachname" name="nachname" required />
+
+                <label for="email">E-Mail-Adresse:</label>
+                <input type="email" id="email" name="email" required />
+
+                <label for="telefon">Telefonnummer:</label>
+                <input type="tel" id="telefon" name="telefon" />
+
+                <label for="betreff">Betreff:</label>
+                <input type="text" id="betreff" name="betreff" required />
+
+                <label for="beschwerdetext">Beschwerdetext:</label>
+                <textarea
+                    id="beschwerdetext"
+                    name="beschwerdetext"
+                    rows="4"
+                    required
+                ></textarea>
+
+                <label for="Bild-Link">Bild hochladen:</label>
+                <input
+                    type="file"
+                    id="image"
+                    name="image"
+                    accept="image/jpeg, image/png"
+                />
+                <button type="submit" value="Senden">Senden</button>
+            </form>
+        </div>
+    </body>
+</html>
