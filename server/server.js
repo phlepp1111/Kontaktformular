@@ -2,11 +2,15 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import multer from "multer";
+import AWS from "aws-sdk";
 
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+//AWS Setup
+AWS.config.region = "eu-central-1";
 
 // Multer configuration
 const storage = multer.memoryStorage(); // Speichert die Datei im Speicher. Sie können auch `multer.diskStorage()` verwenden, um Dateien auf der Festplatte zu speichern.
@@ -28,6 +32,19 @@ app.post("/submit-form", upload.single("image"), (req, res) => {
     console.log("Form data: ", formData);
     if (uploadedFile) {
         console.log("Uploaded file:", uploadedFile.originalname);
+        const uploadParams = {
+            Bucket: "beschwerdebilder",
+            Key: "BeschwerdeBilder/" + uploadedFile.originalname,
+            Body: uploadedFile.buffer,
+        };
+        s3.upload(uploadParams, (err, data) => {
+            if (err) {
+                console.error("Error uploading image to S3:", err);
+                res.status(500).send("Error uploading image to S3");
+            } else {
+                console.log("Image uploaded successfully:", data.Location);
+            }
+        });
     } else {
         console.log("No file uploaded");
     }
