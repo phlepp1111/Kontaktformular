@@ -99,6 +99,12 @@ resource "aws_security_group" "ec2_sg" {
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
+    egress {
+        from_port   = 443
+        to_port     = 443
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
 }
 # ALB Security Group
 resource "aws_security_group" "alb_sg"{
@@ -180,19 +186,25 @@ resource "aws_autoscaling_group" "web_asg" {
 # Create the first launch configuration
 resource "aws_launch_configuration" "web_lc_1" {
   name_prefix          = "web-lc-1-"
-  image_id             = "ami-09f289b20dd1262bb" #ubuntu+server.js
+  image_id             = "ami-04e601abe3e1a910f" #ubuntu
   instance_type       = "t2.micro"
   security_groups    = [aws_security_group.ec2_sg.id]
   iam_instance_profile = aws_iam_instance_profile.beschwerdebilder-bucket-iam-profil.id
   # associate_public_ip_address = true
-  ##eigenen Webserver+Key
   user_data = <<-EOT
               #!/bin/bash
+              mkdir /home/ubuntu/server
+              cd /home/ubuntu/server
+              wget https://ec2-webserver-bucket.s3.eu-central-1.amazonaws.com/index.html
+              wget https://ec2-webserver-bucket.s3.eu-central-1.amazonaws.com/server.js
+              wget https://ec2-webserver-bucket.s3.eu-central-1.amazonaws.com/package.json
               sudo apt-get update -y
               sudo apt-get install -y nodejs
               sudo apt-get install -y npm
               sudo npm install
-              node ./server/server.js
+              sudo chmod 777 /home/ubuntu/server/server.js
+              sudo chmod 777 /home/ubuntu/server/public/index.html
+              sudo node ./server.js
               EOT
   lifecycle {
     create_before_destroy = true

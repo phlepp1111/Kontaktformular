@@ -11,6 +11,8 @@ const __dirname = path.dirname(__filename);
 
 //AWS Setup
 AWS.config.region = "eu-central-1";
+const dynamodb = new AWS.DynamoDB.DocumentClient();
+const s3 = new AWS.S3();
 
 // Multer configuration
 const storage = multer.memoryStorage(); // Speichert die Datei im Speicher. Sie können auch `multer.diskStorage()` verwenden, um Dateien auf der Festplatte zu speichern.
@@ -22,7 +24,7 @@ const upload = multer({
 });
 
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "index.html"));
+    res.sendFile(path.join(__dirname, "index.html"));
 });
 
 app.post("/submit-form", upload.single("image"), (req, res) => {
@@ -72,6 +74,6 @@ app.post("/submit-form", upload.single("image"), (req, res) => {
     res.send("Form data received successfully.");
 });
 
-app.listen(80, () => {
-    console.log("Server läuft auf Port 80");
+app.listen(3000, () => {
+    console.log("Server läuft auf Port 3000");
 });
