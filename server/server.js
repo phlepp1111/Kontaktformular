@@ -30,6 +30,26 @@ app.post("/submit-form", upload.single("image"), (req, res) => {
     const uploadedFile = req.file;
 
     console.log("Form data: ", formData);
+
+    const ddbParams = {
+        TableName: "BeschwerdeDaten",
+        Item: {
+            vorname: req.body.vorname,
+            nachname: req.body.nachname,
+            email: req.body.email,
+            telefon: req.body.telefon,
+            betreff: req.body.betreff,
+            beschwerdetext: req.body.beschwerdetext,
+        },
+    };
+    dynamodb.put(ddbParams, (err, data) => {
+        if (err) {
+            console.error("Fehler beim Speichern in DynamoDB:", err);
+        } else {
+            console.log("Daten erfolgreich in DynamoDB gespeichert:", data);
+        }
+    });
+
     if (uploadedFile) {
         console.log("Uploaded file:", uploadedFile.originalname);
         const uploadParams = {
@@ -52,6 +72,6 @@ app.post("/submit-form", upload.single("image"), (req, res) => {
     res.send("Form data received successfully.");
 });
 
-app.listen(3000, () => {
-    console.log("Server läuft auf Port 3000");
+app.listen(80, () => {
+    console.log("Server läuft auf Port 80");
 });

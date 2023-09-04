@@ -162,7 +162,7 @@ resource "aws_autoscaling_group" "web_asg" {
 # Create the first launch configuration
 resource "aws_launch_configuration" "web_lc_1" {
   name_prefix          = "web-lc-1-"
-  image_id             = "ami-030f92de31f8a3f81" #ubuntu+nginx
+  image_id             = "ami-067ec016f1d057dd6" #ubuntu+server.js
   instance_type       = "t2.micro"
   security_groups    = [aws_security_group.ec2_sg.id]
   iam_instance_profile = aws_iam_instance_profile.beschwerdebilder-bucket-iam-profil.id
@@ -170,12 +170,11 @@ resource "aws_launch_configuration" "web_lc_1" {
   ##eigenen Webserver+Key
   user_data = <<-EOT
               #!/bin/bash
-            
-              # Configure and start Nginx
-              sudo systemctl start nginx.service
-            
-              # mkdir -p /var/www/html
-              # echo "Hello from Nginx" > /var/www/html/index.html
+              cd server
+              sudo apt-get install -y nodejs
+              sudo apt-get install -y npm
+              sudo npm install
+              node server.js
               EOT
   lifecycle {
     create_before_destroy = true
