@@ -87,6 +87,12 @@ resource "aws_security_group" "ec2_sg" {
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
+    ingress {
+        from_port   = 3000
+        to_port     = 3000
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
     egress {
         from_port   = 80
         to_port     = 80
@@ -103,10 +109,22 @@ resource "aws_security_group" "alb_sg"{
     to_port = 80
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
- } 
+ }
+ ingress {
+  from_port   = 3000
+  to_port     = 3000
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+ }
  egress{
     from_port = 80
     to_port = 80
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+ }
+ egress{
+    from_port = 3000
+    to_port = 3000
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
  }
@@ -114,7 +132,7 @@ resource "aws_security_group" "alb_sg"{
 # target group
 resource "aws_lb_target_group" "web_tg" {
   name     = "web-tg"
-  port     = 80
+  port     = 3000
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id
 }
@@ -162,7 +180,7 @@ resource "aws_autoscaling_group" "web_asg" {
 # Create the first launch configuration
 resource "aws_launch_configuration" "web_lc_1" {
   name_prefix          = "web-lc-1-"
-  image_id             = "ami-067ec016f1d057dd6" #ubuntu+server.js
+  image_id             = "ami-09f289b20dd1262bb" #ubuntu+server.js
   instance_type       = "t2.micro"
   security_groups    = [aws_security_group.ec2_sg.id]
   iam_instance_profile = aws_iam_instance_profile.beschwerdebilder-bucket-iam-profil.id
@@ -170,11 +188,11 @@ resource "aws_launch_configuration" "web_lc_1" {
   ##eigenen Webserver+Key
   user_data = <<-EOT
               #!/bin/bash
-              cd server
+              sudo apt-get update -y
               sudo apt-get install -y nodejs
               sudo apt-get install -y npm
               sudo npm install
-              node server.js
+              node ./server/server.js
               EOT
   lifecycle {
     create_before_destroy = true
