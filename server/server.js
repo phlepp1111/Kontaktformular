@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 //AWS Setup
 AWS.config.region = "eu-central-1";
-const dynamodb = new AWS.DynamoDB.DocumentClient();
+const dynamodb = new AWS.DynamoDB();
 const s3 = new AWS.S3();
 
 // Multer configuration
@@ -30,25 +30,49 @@ app.get("/", (req, res) => {
 app.post("/submit-form", upload.single("image"), (req, res) => {
     const formData = req.body;
     const uploadedFile = req.file;
-
+    let nextId = 0;
     console.log("Form data: ", formData);
-
-    const ddbParams = {
+    const queryParams = {
         TableName: "BeschwerdeDaten",
-        Item: {
-            vorname: req.body.vorname,
-            nachname: req.body.nachname,
-            email: req.body.email,
-            telefon: req.body.telefon,
-            betreff: req.body.betreff,
-            beschwerdetext: req.body.beschwerdetext,
-        },
+        ProjectionExpression: "id", // Only project the 'id' attribute
+        Limit: 1, // Limit the scan to one result
     };
-    dynamodb.put(ddbParams, (err, data) => {
+    dynamodb.scan(queryParams, (err, data) => {
         if (err) {
-            console.error("Fehler beim Speichern in DynamoDB:", err);
+            console.error("Error:", err);
         } else {
-            console.log("Daten erfolgreich in DynamoDB gespeichert:", data);
+            // Check if any items were returned
+            if (data.Items.length > 0) {
+                const highestId = parseInt(data.Items[0].id.N, 10); // Extract the highest ID
+                nextId = highestId + 1;
+            } else {
+                // If no items are found, start with ID 1
+                nextId = 1;
+                console.log("No items found. Starting with ID 1.");
+            }
+            console.log("Next ID:", nextId);
+            const ddbParams = {
+                TableName: "BeschwerdeDaten",
+                Item: {
+                    id: { N: nextId },
+                    vorname: { S: formData.vorname },
+                    nachname: { S: formData.nachname },
+                    email: { S: formData.email },
+                    telefon: { N: formData.telefon },
+                    betreff: { S: formData.betreff },
+                    beschwerdetext: { S: formData.beschwerdetext },
+                },
+            };
+            dynamodb.put(ddbParams, (err, data) => {
+                if (err) {
+                    console.error("Fehler beim Speichern in DynamoDB:", err);
+                } else {
+                    console.log(
+                        "Daten erfolgreich in DynamoDB gespeichert:",
+                        data
+                    );
+                }
+            });
         }
     });
 

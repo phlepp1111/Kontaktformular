@@ -94,6 +94,12 @@ resource "aws_security_group" "ec2_sg" {
         cidr_blocks = ["0.0.0.0/0"]
     }
     egress {
+        from_port   = 3000
+        to_port     = 3000
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+    egress {
         from_port   = 80
         to_port     = 80
         protocol    = "tcp"
@@ -123,17 +129,23 @@ resource "aws_security_group" "alb_sg"{
   cidr_blocks = ["0.0.0.0/0"]
  }
  egress{
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
     cidr_blocks = ["0.0.0.0/0"]
  }
- egress{
-    from_port = 3000
-    to_port = 3000
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
- }
+#   egress{
+#     from_port = 0
+#     to_port = 0
+#     protocol = "-1"
+#     cidr_blocks = ["10.0.20.0/24"]
+#  }
+#  egress{
+#     from_port = 3000
+#     to_port = 3000
+#     protocol = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#  }
 }
 # target group
 resource "aws_lb_target_group" "web_tg" {
@@ -173,7 +185,7 @@ resource "aws_autoscaling_group" "web_asg" {
   min_size             = 1
   max_size             = 5
   desired_capacity     = 2
-  vpc_zone_identifier  = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id]
+  vpc_zone_identifier  = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id]
 
   target_group_arns    = [aws_lb_target_group.web_tg.arn]
 
@@ -190,7 +202,7 @@ resource "aws_launch_configuration" "web_lc_1" {
   instance_type       = "t2.micro"
   security_groups    = [aws_security_group.ec2_sg.id]
   iam_instance_profile = aws_iam_instance_profile.beschwerdebilder-bucket-iam-profil.id
-  # associate_public_ip_address = true
+  associate_public_ip_address = true
   user_data = <<-EOT
               #!/bin/bash
               mkdir /home/ubuntu/server
@@ -259,8 +271,8 @@ resource "aws_iam_policy" "beschwerdebilder_bucket_regeln" {
   })
 }
 
-resource "aws_iam_role" "beschwerdebilder_bucket_rolle" {
-  name = "beschwerdebilder-bucket-iam-rolle"
+resource "aws_iam_role" "kontakt_ec2_rolle" {
+  name = "kontakt_ec2_rolle"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -279,7 +291,7 @@ resource "aws_iam_role" "beschwerdebilder_bucket_rolle" {
 
 #Jetzt können wir die Regeln zur Rolle hinzufügen
 resource "aws_iam_role_policy_attachment" "beschwerdebilder_bucket_policy_attachment" {
-  role       = aws_iam_role.beschwerdebilder_bucket_rolle.name
+  role       = aws_iam_role.kontakt_ec2_rolle.name
   policy_arn = aws_iam_policy.beschwerdebilder_bucket_regeln.arn
 }
 
@@ -287,36 +299,7 @@ resource "aws_iam_role_policy_attachment" "beschwerdebilder_bucket_policy_attach
 #Brauchen wir ein "Instanz-Profil", welches die Rolle beinhaltet
 resource "aws_iam_instance_profile" "beschwerdebilder-bucket-iam-profil" {
   name = "beschwerdebilder-bucket-iam-profil"
-  role = aws_iam_role.beschwerdebilder_bucket_rolle.name
-}
-#S3 VPC endpoint
-resource "aws_vpc_endpoint" "s3-vpc-endpoint" {
-  vpc_id          = aws_vpc.main.id
-  service_name    = "com.amazonaws.eu-central-1.s3"
-  #zur privaten routing tabelle hinzufügen
-  route_table_ids = ["${aws_route_table.routing_table_privat.id}"]
-
-  tags = {
-    Name = "s3-vpc-endpoint"
-  }
-}
-#DynamoDB
-resource "aws_dynamodb_table" "BeschwerdeDaten" {
-  name           = "BeschwerdeDaten"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "id"
-  range_key = "email"
-  server_side_encryption {
-    enabled = true
-  }
-  attribute {
-  name = "id"
-  type = "N"
-  }
-  attribute {
-    name = "email"
-    type = "S"
- }
+  role = aws_iam_role.kontakt_ec2_rolle.name
 }
 
 #DynamoDB VPC IAM
@@ -337,30 +320,48 @@ resource "aws_iam_policy" "beschwerdedaten_ddb_regeln" {
     ]
   })
 }
-resource "aws_iam_role" "beschwerdedaten_ddb_rolle" {
-  name = "beschwerdedaten-ddb-iam-rolle"
+# resource "aws_iam_role" "beschwerdedaten_ddb_rolle" {
+#   name = "beschwerdedaten-ddb-iam-rolle"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = ""
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
-      },
-    ]
-  })
-}
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Action = "sts:AssumeRole"
+#         Effect = "Allow"
+#         Sid    = ""
+#         Principal = {
+#           Service = "ec2.amazonaws.com"
+#         }
+#       },
+#     ]
+#   })
+# }
 resource "aws_iam_role_policy_attachment" "beschwerdedaten_ddb_policy_attachment" {
-  role       = aws_iam_role.beschwerdedaten_ddb_rolle.name
+  role       = aws_iam_role.kontakt_ec2_rolle.name
   policy_arn = aws_iam_policy.beschwerdedaten_ddb_regeln.arn
 }
 resource "aws_iam_instance_profile" "beschwerdedaten-ddb-iam-profil" {
   name = "beschwerdedaten-ddb-iam-profil"
-  role = aws_iam_role.beschwerdedaten_ddb_rolle.name
+  role = aws_iam_role.kontakt_ec2_rolle.name
+}
+#DynamoDB
+resource "aws_dynamodb_table" "BeschwerdeDaten" {
+  name           = "BeschwerdeDaten"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "id"
+  range_key = "email"
+  server_side_encryption {
+    enabled = true
+  }
+  attribute {
+  name = "id"
+  type = "N"
+  }
+  attribute {
+    name = "email"
+    type = "S"
+ }
 }
 #DDB VPC endpoint
 resource "aws_vpc_endpoint" "ddb-vpc-endpoint" {
@@ -371,5 +372,15 @@ resource "aws_vpc_endpoint" "ddb-vpc-endpoint" {
 
   tags = {
     Name = "ddb-vpc-endpoint"
+  }
+}#S3 VPC endpoint
+resource "aws_vpc_endpoint" "s3-vpc-endpoint" {
+  vpc_id          = aws_vpc.main.id
+  service_name    = "com.amazonaws.eu-central-1.s3"
+  #zur privaten routing tabelle hinzufügen
+  route_table_ids = ["${aws_route_table.routing_table_privat.id}"]
+
+  tags = {
+    Name = "s3-vpc-endpoint"
   }
 }
