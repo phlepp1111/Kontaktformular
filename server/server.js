@@ -63,7 +63,7 @@ app.post("/submit-form", upload.single("image"), (req, res) => {
                     beschwerdetext: { S: formData.beschwerdetext },
                 },
             };
-            dynamodb.put(ddbParams, (err, data) => {
+            dynamodb.putItem(ddbParams, (err, data) => {
                 if (err) {
                     console.error("Fehler beim Speichern in DynamoDB:", err);
                 } else {
