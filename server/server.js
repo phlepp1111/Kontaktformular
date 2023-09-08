@@ -27,52 +27,46 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "index.html"));
 });
 
-app.post("/submit-form", upload.single("image"), (req, res) => {
+app.post("/submit-form", upload.single("image"), async (req, res) => {
     const formData = req.body;
     const uploadedFile = req.file;
     let nextId = 0;
     console.log("Form data: ", formData);
-    const queryParams = {
+
+    const scanParams = {
         TableName: "BeschwerdeDaten",
-        ProjectionExpression: "id", // Only project the 'id' attribute
-        Limit: 1, // Limit the scan to one result
+        Select: "COUNT",
     };
-    dynamodb.scan(queryParams, (err, data) => {
+    const count = await dynamodb.scan(scanParams).promise();
+    console.log("Count:", count);
+    console.log(typeof count);
+    if (count.Count > 0) {
+        console.log("Items found:", count.Count);
+        // const highestId = parseInt(data.Items[0].id.N); // Extract the highest ID
+        nextId = count.Count + 1;
+    } else {
+        // If no items are found, start with ID 1
+        nextId = 1;
+        console.log("No items found. Starting with ID 1.");
+    }
+    console.log("Next ID:", nextId);
+    const ddbParams = {
+        TableName: "BeschwerdeDaten",
+        Item: {
+            id: { N: nextId.toString() },
+            vorname: { S: formData.vorname },
+            nachname: { S: formData.nachname },
+            email: { S: formData.email },
+            telefon: { N: formData.telefon },
+            betreff: { S: formData.betreff },
+            beschwerdetext: { S: formData.beschwerdetext },
+        },
+    };
+    dynamodb.putItem(ddbParams, (err, data) => {
         if (err) {
-            console.error("Error:", err);
+            console.error("Fehler beim Speichern in DynamoDB:", err);
         } else {
-            // Check if any items were returned
-            if (data.Items.length > 0) {
-                const highestId = parseInt(data.Items[0].id.N, 10); // Extract the highest ID
-                nextId = highestId + 1;
-            } else {
-                // If no items are found, start with ID 1
-                nextId = 1;
-                console.log("No items found. Starting with ID 1.");
-            }
-            console.log("Next ID:", nextId);
-            const ddbParams = {
-                TableName: "BeschwerdeDaten",
-                Item: {
-                    id: { N: nextId },
-                    vorname: { S: formData.vorname },
-                    nachname: { S: formData.nachname },
-                    email: { S: formData.email },
-                    telefon: { N: formData.telefon },
-                    betreff: { S: formData.betreff },
-                    beschwerdetext: { S: formData.beschwerdetext },
-                },
-            };
-            dynamodb.putItem(ddbParams, (err, data) => {
-                if (err) {
-                    console.error("Fehler beim Speichern in DynamoDB:", err);
-                } else {
-                    console.log(
-                        "Daten erfolgreich in DynamoDB gespeichert:",
-                        data
-                    );
-                }
-            });
+            console.log("Daten erfolgreich in DynamoDB gespeichert:", data);
         }
     });
 

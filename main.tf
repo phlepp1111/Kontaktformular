@@ -134,18 +134,6 @@ resource "aws_security_group" "alb_sg"{
     protocol = "-1"
     cidr_blocks = ["0.0.0.0/0"]
  }
-#   egress{
-#     from_port = 0
-#     to_port = 0
-#     protocol = "-1"
-#     cidr_blocks = ["10.0.20.0/24"]
-#  }
-#  egress{
-#     from_port = 3000
-#     to_port = 3000
-#     protocol = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#  }
 }
 # target group
 resource "aws_lb_target_group" "web_tg" {
@@ -198,7 +186,7 @@ resource "aws_autoscaling_group" "web_asg" {
 # Create the first launch configuration
 resource "aws_launch_configuration" "web_lc_1" {
   name_prefix          = "web-lc-1-"
-  image_id             = "ami-0ab727da511c3155b" #ubuntu+node+webserver
+  image_id             = "ami-0ab727da511c3155b" #custom ubuntu+node+webserver
   instance_type       = "t2.micro"
   security_groups    = [aws_security_group.ec2_sg.id]
   iam_instance_profile = aws_iam_instance_profile.beschwerdebilder-bucket-iam-profil.id
@@ -219,7 +207,7 @@ resource "aws_autoscaling_policy" "scale_up" {
   name               = "scale-up-policy"
   scaling_adjustment = 1
   adjustment_type    = "ChangeInCapacity"
-  cooldown           = 30 # Wait time in seconds between scaling actions
+  cooldown           = 30 # seconds
   autoscaling_group_name = aws_autoscaling_group.web_asg.name
 }
 
@@ -232,7 +220,7 @@ resource "aws_cloudwatch_metric_alarm" "scale_up" {
   namespace           = "AWS/ApplicationELB"
   period              = "60"
   statistic           = "Sum"
-  threshold           = "1" # Modify this value based on when you want to scale up
+  threshold           = "1" 
   alarm_description   = "This metric triggers when there are too many requests on the ALB"
   alarm_actions       = [aws_autoscaling_policy.scale_up.arn]
   dimensions = {
@@ -311,23 +299,7 @@ resource "aws_iam_policy" "beschwerdedaten_ddb_regeln" {
     ]
   })
 }
-# resource "aws_iam_role" "beschwerdedaten_ddb_rolle" {
-#   name = "beschwerdedaten-ddb-iam-rolle"
 
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Action = "sts:AssumeRole"
-#         Effect = "Allow"
-#         Sid    = ""
-#         Principal = {
-#           Service = "ec2.amazonaws.com"
-#         }
-#       },
-#     ]
-#   })
-# }
 resource "aws_iam_role_policy_attachment" "beschwerdedaten_ddb_policy_attachment" {
   role       = aws_iam_role.kontakt_ec2_rolle.name
   policy_arn = aws_iam_policy.beschwerdedaten_ddb_regeln.arn
